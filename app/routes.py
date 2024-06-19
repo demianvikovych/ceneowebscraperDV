@@ -95,7 +95,7 @@ def product(product_id):
 
 @app.route('/charts/<product_id>')
 def charts(product_id):
-    return render_template("charts.html", product_id=product_id)
+  return render_template("charts.html", product_id=product_id)
 
 @app.route('/download_json/<product_id>')
 def download_json(product_id):
