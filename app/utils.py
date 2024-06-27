@@ -1,53 +1,65 @@
-from deep_translator import GoogleTranslator
+from deep_translator import  GoogleTranslator
 
-def extract_content(ancestor, selector=None, attribute=None, return_list=False):
+def extract(ancestor, selector, attribute=None, return_list=False):
+    if return_list:
+        if attribute:
+            return [tag[attribute] for tag in ancestor.select(selector)]
+        return [tag.get_text().strip() for tag in ancestor.select(selector)]
     if selector:
-        if return_list:
-            if attribute:
-                return [tag[attribute].strip() for tag in ancestor.select(selector)]
-            return [tag.text.strip() for tag in ancestor.select(selector)]
         if attribute:
             try:
-                return ancestor.select_one(selector)[attribute].strip()
+                return ancestor.select_one(selector)[attribute]
             except TypeError:
                 return None
         try:
-            return ancestor.select_one(selector).text.strip()
+            return ancestor.select_one(selector).get_text().strip()
         except AttributeError:
             return None
     if attribute:
         return ancestor[attribute]
-    return ancestor.text.strip()
+    return ancestor.get_text().strip()
 
-def score(score:str) -> float:
-    s = score.split("/")
-    return float(s[0].replace(",","."))/float(s[1])
+def rate(score):
+    rate = score.split("/")
+    return float(rate[0].replace(",","."))/float(rate[1])
 
-def translate(text, lang_from = "pl", lang_to = "en"):
+def recommend(recommendation):
+    return True if recommendation == "Polecam" else False if recommendation == "Nie polecam" else None
+
+
+def translate(text, from_lang = "pl", to_lang = "en"):
+  if text:
     if isinstance(text, list):
-        return [GoogleTranslator(source=lang_from, target=lang_to).translate(t) for t in text]
-    return GoogleTranslator(source=lang_from, target=lang_to).translate(text)
+      return {
+        from_lang: text,
+        to_lang: [GoogleTranslator(source=from_lang, target=to_lang).translate(t) for t in text]
+      }
+    return {
+      from_lang: text,
+      to_lang: GoogleTranslator(source=from_lang, target=to_lang).translate(text)
+    }
+  return  None
 
 selectors = {
-    "opinion_id": (None, "data-entry-id"),
-    "author": ("span.user-post__author-name",),
-    "recommendation": ("span.user-post__author-recomendation > em",),
-    "score": ("span.user-post__score-count",),
-    "content": ("div.user-post__text",),
-    "pros": ("div.review-feature__title--positives ~ div.review-feature__item", None, True),
-    "cons": ("div.review-feature__title--negatives ~ div.review-feature__item", None, True),
-    "helpful": ("button.vote-yes > span",),
-    "unhelpful": ("button.vote-no > span",),
-    "publish_date": ("span.user-post__published > time:nth-child(1)", "datetime"),
-    "buy_date": ("span.user-post__published > time:nth-child(2)", "datetime")
+    "opinion_id": [None, "data-entry-id"],
+    "author": ["span.user-post__author-name"],
+    "recommendation": ["span.user-post__author-recomendation > em"],
+    "score": ["span.user-post__score-count"],
+    "content": ["div.user-post__text"],
+    "pros": ["div.review-feature__title--positives ~ div.review-feature__item", None, True],
+    "cons": ["div.review-feature__title--negatives ~ div.review-feature__item", None, True],
+    "helpful": ["button.vote-yes > span"],
+    "unhelpful": ["button.vote-no > span"],
+    "publish_date": ["span.user-post__published > time:nth-child(2)", "datetime"],
+    "purchase_date": ["span.user-post__published > time:nth-child(1)", "datetime"],
 }
 
 transformations = {
-    "recommendation": lambda r: True if r == "Polecam" else False if r == "Nie polecam" else None,
-    "score": score,
+    "recommendation": recommend,
+    "score": rate,
     "helpful": int,
     "unhelpful": int,
     "content": translate,
     "pros": translate,
-    "cons": translate
+    "cons": translate,
 }
