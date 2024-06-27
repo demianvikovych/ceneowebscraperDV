@@ -7,7 +7,7 @@ import requests
 import pandas as pd
 import numpy as np
 from bs4 import BeautifulSoup
-from app.utils import extract, score,selectors,transformations,translate
+from app.utils import extract, rate,selectors,transformations,translate
 
 @app.route('/')
 def index():
